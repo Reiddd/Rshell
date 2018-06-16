@@ -2,7 +2,7 @@
     waitpid()
 */
 #include <sys/wait.h>
-#include <sys.types.h>
+#include <sys/types.h>
 /*
     chdir()
     fork()
@@ -37,7 +37,7 @@ int lsh_cd(char** args);
 int lsh_help(char** args);
 int lsh_exit(char** args);
 
-char* builtin_str = {"cd", "help", "exit"};
+char* builtin_str[] = {"cd", "help", "exit"};
 
 // an array of function pointers
 int (*builtin_func[]) (char **) = {
@@ -72,6 +72,8 @@ int lsh_help(char** args)
     for (int i=0; i<lsh_num_builtins(); i++) {
         printf("    %s\n", builtin_str[i]);
     }
+
+    return 1;
 }
 
 int lsh_exit(char** args)
@@ -97,7 +99,7 @@ char* lsh_read_line()
     }
 */
     int   position    = 0; // position in buffer
-    int   buffer_size = LSH_READLINE_BUFFER_SIZE
+    int   buffer_size = LSH_READLINE_BUFFER_SIZE;
     char* buffer      = malloc(sizeof(char) * buffer_size);
     int   ch;
 
@@ -158,7 +160,7 @@ char** lsh_split_line(char* line)
         tokens[position++] = token;
 
         if (position > buffer_size) {
-            buffer_size += LSH_TOEKN_BUFFER_SIZE;
+            buffer_size += LSH_TOKEN_BUFFER_SIZE;
             tokens       = realloc(tokens, sizeof(char*) * buffer_size);
 
             if (!tokens) {
@@ -217,9 +219,9 @@ int lsh_launch(char** args)
 
 int lsh_execute(char** args)
 {
-    if (args[0] == NULL) { return 1 /* an empty command */ }
+    if (args[0] == NULL) { return 1; /* an empty command */ }
 
-    for (int i=0; i<ls_num_builtins(); i++)
+    for (int i=0; i<lsh_num_builtins(); i++)
         if (strcmp(args[0], builtin_str[i]) == 0)
             return (*builtin_func[i])(args);
 
@@ -227,7 +229,7 @@ int lsh_execute(char** args)
 }
 /* E ---------------------------- process user's input --------------------------- */
 
-
+/* S ---------------------------- main body ---------------------------- */
 void lsh_loop()
 {
     char*  line;
@@ -237,7 +239,7 @@ void lsh_loop()
     do {
         printf("> ");
         line   = lsh_read_line();
-        args   = lsh_split_line();
+        args   = lsh_split_line(line);
         status = lsh_execute(args);
 
         // in case of memory lack
@@ -254,3 +256,4 @@ int main(int argc, char** argv)
 
     return 0;
 }
+/* E ---------------------------- main body ---------------------------- */
