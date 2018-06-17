@@ -33,65 +33,65 @@
 #include <string.h>
 
 /* S ---------------------------- built in --------------------------- */
-int lsh_cd(char** args);
-int lsh_help(char** args);
-int lsh_exit(char** args);
+int rsh_cd(char** args);
+int rsh_help(char** args);
+int rsh_exit(char** args);
 
 char* builtin_str[] = {"cd", "help", "exit"};
 
 // an array of function pointers
 int (*builtin_func[]) (char **) = {
-  &lsh_cd,
-  &lsh_help,
-  &lsh_exit
+  &rsh_cd,
+  &rsh_help,
+  &rsh_exit
 };
 
-int lsh_num_builtins()
+int rsh_num_builtins()
 {
     return sizeof(builtin_str) / sizeof(char*);
 }
 
-int lsh_cd(char** args)
+int rsh_cd(char** args)
 {
     if (args[1] == NULL) {
-        fprintf(stderr, "lsh: expected arguments to \"cd\"\n");
+        fprintf(stderr, "rsh: expected arguments to \"cd\"\n");
     }
     else if (chdir(args[1]) != 0) {
-        perror("lsh");
+        perror("rsh");
     }
 
     return 1;
 }
 
-int lsh_help(char** args)
+int rsh_help(char** args)
 {
     printf("Reid's shell\n"
            "type in commands and press Enter!\n"
            "a list of builtin commands:\n");
 
-    for (int i=0; i<lsh_num_builtins(); i++) {
+    for (int i=0; i<rsh_num_builtins(); i++) {
         printf("    %s\n", builtin_str[i]);
     }
 
     return 1;
 }
 
-int lsh_exit(char** args)
+int rsh_exit(char** args)
 {
     return 0;
 }
 /* E ---------------------------- built in --------------------------- */
 
 /* S ---------------------------- process user's input --------------------------- */
-#define LSH_READLINE_BUFFER_SIZE 1024
-char* lsh_read_line()
+#define RSH_READLINE_BUFFER_SIZE 1024
+char* rsh_read_line()
 {
 /*
     read line from stdin.
     write in old-style C, use getchar() instead of getline() because I might want to add some parse function in the code later.
 
 
-    char* lsh_read_line() {                   // here I write a modern style code, it does the same but uses getline()
+    char* rsh_read_line() {                   // here I write a modern style code, it does the same but uses getline()
         char*   line;
         ssize_t buffer_size = 0;
         getline(&line, &buffer_size, stdin);
@@ -99,12 +99,12 @@ char* lsh_read_line()
     }
 */
     int   position    = 0; // position in buffer
-    int   buffer_size = LSH_READLINE_BUFFER_SIZE;
+    int   buffer_size = RSH_READLINE_BUFFER_SIZE;
     char* buffer      = malloc(sizeof(char) * buffer_size);
     int   ch;
 
     if (!buffer) {
-        fprintf(stderr, "lsh: allocation error\n");
+        fprintf(stderr, "rsh: allocation error\n");
         exit(1);
     }
 
@@ -120,11 +120,11 @@ char* lsh_read_line()
         }
 
         if (position > buffer_size) { // reallocate if exceed the buffer size
-            buffer_size += LSH_READLINE_BUFFER_SIZE;
+            buffer_size += RSH_READLINE_BUFFER_SIZE;
             buffer       = realloc(buffer, sizeof(char) * buffer_size);
 
             if (!buffer) {
-                fprintf(stderr, "lsh: allocation error\n");
+                fprintf(stderr, "rsh: allocation error\n");
                 exit(1);
             }
         }
@@ -132,20 +132,20 @@ char* lsh_read_line()
 }
 
 
-#define LSH_TOKEN_BUFFER_SIZE 64
-#define LSH_TOKEN_DELIMETER   " \t\n\r\a"
-char** lsh_split_line(char* line)
+#define RSH_TOKEN_BUFFER_SIZE 64
+#define RSH_TOKEN_DELIMETER   " \t\n\r\a"
+char** rsh_split_line(char* line)
 {
 /*
     parse user's input, return an array of tokens.
 */
-    int    buffer_size = LSH_TOKEN_BUFFER_SIZE;
+    int    buffer_size = RSH_TOKEN_BUFFER_SIZE;
     char** tokens      = malloc(sizeof(char*) * buffer_size);
     char*  token;
     int    position;
 
     if (!tokens) {
-        fprintf(stderr, "lsh: allocation error\n");
+        fprintf(stderr, "rsh: allocation error\n");
         exit(1);
     }
 
@@ -154,22 +154,22 @@ char** lsh_split_line(char* line)
         return next token in str split by one of delimeters.
         only the first call needs to specify the str, upcoming calls can just strtok(NULL, delimeters)
     */
-    token = strtok(line, LSH_TOKEN_DELIMETER);
+    token = strtok(line, RSH_TOKEN_DELIMETER);
 
     while (token != NULL) {
         tokens[position++] = token;
 
         if (position > buffer_size) {
-            buffer_size += LSH_TOKEN_BUFFER_SIZE;
+            buffer_size += RSH_TOKEN_BUFFER_SIZE;
             tokens       = realloc(tokens, sizeof(char*) * buffer_size);
 
             if (!tokens) {
-                fprintf(stderr, "lsh: alocation error\n");
+                fprintf(stderr, "rsh: alocation error\n");
                 exit(1);
             }
         }
 
-        token = strtok(NULL, LSH_TOKEN_DELIMETER);
+        token = strtok(NULL, RSH_TOKEN_DELIMETER);
     }
 
     tokens[position] = NULL;
@@ -177,7 +177,7 @@ char** lsh_split_line(char* line)
 }
 
 
-int lsh_launch(char** args)
+int rsh_launch(char** args)
 {
     pid_t pid;
     pid_t wpid;
@@ -201,11 +201,11 @@ int lsh_launch(char** args)
             void perror(char* str);
             print last function's error to stderr in the form of "str + error_str"
         */
-        if (execvp(args[0], args) == -1) { perror("lsh"); }
+        if (execvp(args[0], args) == -1) { perror("rsh"); }
         exit(1);
     }
     else if (pid < 0) { // error when forking
-        perror("lsh");
+        perror("rsh");
     }
     else { // parent process
         do {
@@ -217,20 +217,20 @@ int lsh_launch(char** args)
 }
 
 
-int lsh_execute(char** args)
+int rsh_execute(char** args)
 {
     if (args[0] == NULL) { return 1; /* an empty command */ }
 
-    for (int i=0; i<lsh_num_builtins(); i++)
+    for (int i=0; i<rsh_num_builtins(); i++)
         if (strcmp(args[0], builtin_str[i]) == 0)
             return (*builtin_func[i])(args);
 
-    return lsh_launch(args);
+    return rsh_launch(args);
 }
 /* E ---------------------------- process user's input --------------------------- */
 
 /* S ---------------------------- main body ---------------------------- */
-void lsh_loop()
+void rsh_loop()
 {
     char*  line;
     char** args;
@@ -238,9 +238,9 @@ void lsh_loop()
 
     do {
         printf("> ");
-        line   = lsh_read_line();
-        args   = lsh_split_line(line);
-        status = lsh_execute(args);
+        line   = rsh_read_line();
+        args   = rsh_split_line(line);
+        status = rsh_execute(args);
 
         // in case of memory lack
         free(line);
@@ -252,7 +252,7 @@ void lsh_loop()
 int main(int argc, char** argv)
 {
     // main loop
-    lsh_loop();
+    rsh_loop();
 
     return 0;
 }
